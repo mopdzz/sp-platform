@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-3.0.xsd 
+	http://www.springframework.org/schema/tx 
+	http://www.springframework.org/schema/tx/spring-tx-3.0.xsd 
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context-3.0.xsd"
+	default-lazy-init="true">
+
+	<description>Spring公共配置 </description>
+
+	<!-- 如果注解的方式进行事务管理 需要打开 -->
+	<tx:annotation-driven transaction-manager="txManager"
+		proxy-target-class="true" />
+
+	<!-- 在类中使用@Autowired或者@Resource注解方式进行装配 -->
+	<context:annotation-config />
+
+	<!-- 使用annotation 自动注册bean,并保证@Required,@Autowired的属性被注入 -->
+	<context:component-scan base-package="com.sp.platform" />
+
+	<!-- 数据源配置,使用应用内的DBCP数据库连接池 -->
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+		destroy-method="close">
+		<!-- Connection Info -->
+        <property name="driverClass" value="${jdbc.driver}" />
+        <property name="jdbcUrl" value="${jdbc.url}" />
+        <property name="user" value="${jdbc.username}" />
+        <property name="password" value="${jdbc.password}" />
+
+        <!-- Connection Pooling Info -->
+        <property name="minPoolSize" value="2" />
+        <property name="maxPoolSize" value="20" />
+        <!-- 最大空间时间 -->
+        <property name="maxIdleTime" value="300" />
+        <!-- 数据连接耗尽时一次同时获取的连接数 -->
+        <property name="acquireIncrement" value="5" />
+        <property name="maxStatements" value="0" />
+        <property name="initialPoolSize" value="2" />
+        <!-- 每60秒检查连接池中空闲的连接 -->
+        <property name="idleConnectionTestPeriod" value="300" />
+        <!-- 定义在从数据库获取连接失败后重复尝试的次数 -->
+        <property name="acquireRetryAttempts" value="30" />
+        <property name="acquireRetryDelay" value="1000" />
+        <property name="breakAfterAcquireFailure" value="true" />
+        <property name="testConnectionOnCheckout" value="false" />
+	</bean>
+
+    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+   		<property name="dataSource">
+   			<ref bean="dataSource" />
+   		</property>
+   	</bean>
+
+	<!-- Hibernate配置 -->
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">${hibernate.dialect}</prop>
+				<prop key="hibernate.show_sql">${hibernate.show_sql}</prop>
+				<prop key="hibernate.format_sql">${hibernate.format_sql}</prop>
+				<prop key="hibernate.hmb2ddl.auto">update</prop>
+				<prop key="hibernate.generate_statistics">false</prop>
+			</props>
+		</property>
+		<property name="packagesToScan" value="com.sp.platform.entity" />
+	</bean>
+
+
+	<!-- 事务管理 -->
+	<bean id="txManager"
+		class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+
+    <!-- 线程池 用于处理数据 -->
+    <bean id="threadPoolTaskExecutor"
+          class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor"
+          destroy-method="shutdown">
+        <property name="corePoolSize" value="5" />
+        <property name="keepAliveSeconds" value="60" />
+        <property name="maxPoolSize" value="100" />
+        <!--去掉queueCapacity属性则延后执行，放在无界队列当中，任务过多仍然可能内存溢出 -->
+        <property name="queueCapacity" value="500" />
+        <property name="rejectedExecutionHandler">
+            <bean class="java.util.concurrent.ThreadPoolExecutor$DiscardOldestPolicy">
+            </bean>
+            <!-- handler有四个选择：
+                ThreadPoolExecutor.AbortPolicy() 抛出java.util.concurrent.RejectedExecutionException异常
+                ThreadPoolExecutor.CallerRunsPolicy() 重试添加当前的任务，他会自动重复调用execute()方法
+                ThreadPoolExecutor.DiscardOldestPolicy()  抛弃旧的任务
+                ThreadPoolExecutor.DiscardPolicy() 抛弃当前的任务 -->
+        </property>
+    </bean>
+
+    <!-- 计划任务，定时更新缓存中数据 -->
+    <bean name="timerMain" class="com.sp.platform.timer.TimerMain">
+        <property name="initialDelay" value="1000" /><!-- 首次加载延时时间 -->
+        <property name="period" value="180000" /><!-- 周期时间 -->
+        <property name="list">
+            <list>
+                <ref bean="spInfoCache" />
+                <ref bean="snumCache" />
+                <ref bean="haoduanCache" />
+                <ref bean="cpSyncCache" />
+                <ref bean="provReduceCache" />
+            </list>
+        </property>
+    </bean>
+
+    <bean id="messageSource"
+          class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+        <property name="defaultEncoding" value="utf-8" />
+        <property name="cacheSeconds" value="30000" />
+        <property name="basenames">
+            <list>
+                <value>classpath:i18n/appConfig</value>
+            </list>
+        </property>
+    </bean>
+    
+    <import resource="appContext_quartz.xml"/>
+</beans>

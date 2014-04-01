@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ehcache>
+
+	<diskStore path="D:/ehcache/spplatform" />
+
+	<!-- DefaultCache setting. -->
+	<defaultCache maxElementsInMemory="1000"
+		memoryStoreEvictionPolicy="LRU" eternal="false" timeToIdleSeconds="300"
+		timeToLiveSeconds="300" overflowToDisk="false" diskPersistent="false" />
+
+	<!-- Special objects setting. -->
+	<cache name="com.sp.platform.entity.Menu" maxElementsInMemory="1000"
+		timeToIdleSeconds="120" timeToLiveSeconds="120"
+		memoryStoreEvictionPolicy="LRU" eternal="false" diskPersistent="false"
+		overflowToDisk="true" maxElementsOnDisk="100000" />
+
+</ehcache>

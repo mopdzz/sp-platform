@@ -1,0 +1,111 @@
+<?xml version='1.0' encoding='GBK' ?>
+<!DOCTYPE log4j:configuration SYSTEM
+        "http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/xml/doc-files/log4j.dtd">
+<log4j:configuration>
+
+    <!--控制台输出 -->
+    <appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss,SSS}-- %p -- %l -- %m%n"/>
+        </layout>
+        <filter class="org.apache.log4j.varia.LevelRangeFilter">
+            <param name="LevelMin" value="${sp.platform.log.level}"/>
+        </filter>
+    </appender>
+
+
+    <!-- sql日志 -->
+    <appender name="FILE-SQL" class="org.apache.log4j.DailyRollingFileAppender">
+        <param name="DatePattern" value="'.'yyyy-MM-dd"/>
+        <param name="file" value="${sp.platform.log.path}/sp-platform-sql.log"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss,SSS}-- %p -- %l -- %m%n"/>
+        </layout>
+    </appender>
+
+
+    <!-- debug日志 -->
+    <appender name="FILE-DEFAULT" class="org.apache.log4j.DailyRollingFileAppender">
+        <param name="DatePattern" value="'.'yyyy-MM-dd"/>
+        <param name="file" value="${sp.platform.log.path}/sp-platform.log"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss,SSS}-- %p -- %l -- %m%n"/>
+        </layout>
+    </appender>
+
+    <appender name="FILE-SP" class="org.apache.log4j.DailyRollingFileAppender">
+        <param name="DatePattern" value="'.'yyyy-MM-dd"/>
+        <param name="file" value="${sp.platform.log.path}/sp-platform-sp.log"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss,SSS}-- %p -- %l -- %m%n"/>
+        </layout>
+    </appender>
+
+    <appender name="FILE-TEMP" class="org.apache.log4j.DailyRollingFileAppender">
+        <param name="DatePattern" value="'.'yyyy-MM-dd"/>
+        <param name="file" value="${sp.platform.log.path}/sp-platform-temp.log"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss,SSS}-- %p -- %l -- %m%n"/>
+        </layout>
+    </appender>
+
+    <appender name="FILE-BILL" class="org.apache.log4j.DailyRollingFileAppender">
+        <param name="DatePattern" value="'.'yyyy-MM-dd"/>
+        <param name="file" value="${sp.platform.log.path}/sp-platform-bill.log"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss,SSS}-- %p -- %l -- %m%n"/>
+        </layout>
+    </appender>
+
+    <appender name="FILE-BILL-ERROR" class="org.apache.log4j.DailyRollingFileAppender">
+        <param name="DatePattern" value="'.'yyyy-MM-dd"/>
+        <param name="file" value="${sp.platform.log.path}/sp-platform-bill-error.log"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss,SSS}-- %p -- %l -- %m%n"/>
+        </layout>
+    </appender>
+
+
+    <category name="java.sql" additivity="false">
+        <priority value="${sp.platform.log.level}"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE-SQL"/>
+    </category>
+    <!--公共-->
+    <category name="com.sp.platform" additivity="false">
+        <priority value="${sp.platform.log.level}"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE-DEFAULT"/>
+    </category>
+    <!--通道-->
+    <category name="com.sp.platform.sp" additivity="false">
+        <priority value="${sp.platform.log.level}"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE-SP"/>
+    </category>
+    <!--通道-->
+    <category name="com.sp.platform.temp" additivity="false">
+        <priority value="${sp.platform.log.level}"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE-TEMP"/>
+    </category>
+    <!--话单-->
+    <category name="com.sp.platform.bill" additivity="false">
+        <priority value="${sp.platform.log.level}"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE-BILL"/>
+    </category>
+    <!--错误话单-->
+    <category name="com.sp.platform.bill.error" additivity="false">
+        <priority value="${sp.platform.log.level}"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE-BILL-ERROR"/>
+    </category>
+
+    <root>
+        <priority value="${sp.platform.log.level}"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE-DEFAULT"/>
+    </root>
+
+</log4j:configuration>

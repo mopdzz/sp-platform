@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+
+    <!--4. 启动Quartz，开始调度工作 -->
+    <bean
+            class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+        <property name="triggers">
+            <list>
+                <ref bean="syncBillTimer"/>
+                <!--1. 实时话单同步 	 注：每分种运行一次 -->
+                <ref bean="haoduanTimer"/>
+                <!--2. 取号段数据 	 注：每分种运行一次 -->
+                <!--<ref bean="syncSmsBillTimer"/>-->
+                <!--3. 实时短信话单同步 	 注：每分种运行一次 -->
+            </list>
+        </property>
+    </bean>
+
+    <!--1. 实时话单同步 	 注：每分种运行一次 -->
+    <bean id="sfPostBillJobDetail"
+          class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+        <property name="targetObject" ref="syncBillService"/>
+        <property name="targetMethod" value="syncBill"/>
+        <property name="concurrent" value="false"/>
+    </bean>
+
+    <!--1. 实时话单同步 	 注：每分种运行一次 -->
+    <bean id="syncBillTimer"
+          class="org.springframework.scheduling.quartz.CronTriggerBean">
+        <property name="jobDetail">
+            <ref bean="sfPostBillJobDetail"/>
+        </property>
+        <property name="cronExpression">
+            <value>0/30 * * * * ? *</value>
+        </property>
+    </bean>
+
+    <!--2. 取号段数据 	 注：每分种运行一次 -->
+    <bean id="haoduanJobDetail"
+          class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+        <property name="targetObject" ref="haoDuanService"/>
+        <property name="targetMethod" value="processNaHaoduan"/>
+        <property name="concurrent" value="false"/>
+    </bean>
+
+    <!--2. 取号段数据 	 注：每分种运行一次 -->
+    <bean id="haoduanTimer"
+          class="org.springframework.scheduling.quartz.CronTriggerBean">
+        <property name="jobDetail">
+            <ref bean="haoduanJobDetail"/>
+        </property>
+        <property name="cronExpression">
+            <value>0 0/1 * * * ? *</value>
+        </property>
+    </bean>
+
+    <!--3. 实时SMS话单同步 	 注：每分种运行一次 -->
+    <bean id="sfSmsBillJobDetail"
+          class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+        <property name="targetObject" ref="syncSmsBillService"/>
+        <property name="targetMethod" value="syncBill"/>
+        <property name="concurrent" value="false"/>
+    </bean>
+
+    <!--3. 实时SMS话单同步 	 注：每分种运行一次 -->
+    <bean id="syncSmsBillTimer"
+          class="org.springframework.scheduling.quartz.CronTriggerBean">
+        <property name="jobDetail">
+            <ref bean="sfSmsBillJobDetail"/>
+        </property>
+        <property name="cronExpression">
+            <value>0/30 * * * * ? *</value>
+        </property>
+    </bean>
+
+    <!-- 线程池 用于处理数据 -->
+    <bean id="syncTaskExecutor"
+          class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor"
+          destroy-method="shutdown">
+        <property name="corePoolSize" value="5"/>
+        <property name="keepAliveSeconds" value="60"/>
+        <property name="maxPoolSize" value="100"/>
+        <!--去掉queueCapacity属性则延后执行，放在无界队列当中，任务过多仍然可能内存溢出 -->
+        <property name="queueCapacity" value="500"/>
+        <property name="rejectedExecutionHandler">
+            <bean class="java.util.concurrent.ThreadPoolExecutor$DiscardOldestPolicy">
+            </bean>
+            <!-- handler有四个选择：
+                ThreadPoolExecutor.AbortPolicy() 抛出java.util.concurrent.RejectedExecutionException异常
+                ThreadPoolExecutor.CallerRunsPolicy() 重试添加当前的任务，他会自动重复调用execute()方法
+                ThreadPoolExecutor.DiscardOldestPolicy()  抛弃旧的任务
+                ThreadPoolExecutor.DiscardPolicy() 抛弃当前的任务 -->
+        </property>
+    </bean>
+</beans>
